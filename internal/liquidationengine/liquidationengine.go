@@ -11,15 +11,21 @@ import (
 
 // App represents the main application
 type App struct {
+    // Flag to enable verbose logging
     Verbose       bool
+    // Number of processed items
     ProcessedCount int
 }
 
 // ProcessResult represents processing results
 type ProcessResult struct {
+    // Flag indicating success
     Success   bool        `json:"success"`
+    // Human-readable message
     Message   string      `json:"message"`
+    // Additional data (optional)
     Data      interface{} `json:"data,omitempty"`
+    // Timestamp of result generation
     Timestamp time.Time   `json:"timestamp"`
 }
 
@@ -33,87 +39,69 @@ func NewApp(verbose bool) *App {
 
 // Run executes the main application logic
 func (a *App) Run(inputFile, outputFile string) error {
+    // Log application start
     if a.Verbose {
         log.Println("Starting LiquidationEngine processing...")
     }
 
-    // Read input data
+    // Read input data from file or use default test data
     var inputData string
     if inputFile != "" {
+        // Log input file read
         if a.Verbose {
             log.Printf("Reading from file: %s", inputFile)
         }
+        // Attempt to read input file
         data, err := ioutil.ReadFile(inputFile)
         if err != nil {
+            // Return error if file read fails
             return fmt.Errorf("failed to read input file: %w", err)
         }
         inputData = string(data)
     } else {
+        // Use default test data
         inputData = "Sample data for processing"
+        // Log default data usage
         if a.Verbose {
             log.Println("Using default test data")
         }
     }
 
-    // Process the data
+    // Process the input data
     result, err := a.Process(inputData)
     if err != nil {
+        // Return error if processing fails
         return fmt.Errorf("processing failed: %w", err)
     }
 
-    // Generate output
+    // Marshal result to JSON
     output, err := json.MarshalIndent(result, "", "  ")
     if err != nil {
+        // Return error if marshaling fails
         return fmt.Errorf("failed to marshal result: %w", err)
     }
 
     // Save or print output
     if outputFile != "" {
+        // Log output file write
         if a.Verbose {
             log.Printf("Writing results to: %s", outputFile)
         }
+        // Attempt to write output file
         err = ioutil.WriteFile(outputFile, output, 0o644)
         if err != nil {
+            // Return error if file write fails
             return fmt.Errorf("failed to write output file: %w", err)
         }
     } else {
+        // Log output print
+        if a.Verbose {
+            log.Println("Printing results to console")
+        }
+        // Print output to console
         fmt.Println(string(output))
     }
 
-    if a.Verbose {
-        log.Printf("Processing complete. Total processed: %d", a.ProcessedCount)
-    }
-
+    // Return success
     return nil
-}
-
-// Process handles the core data processing
-func (a *App) Process(data string) (*ProcessResult, error) {
-    if a.Verbose {
-        log.Printf("Processing data of length: %d", len(data))
-    }
-
-    // Simulate processing
-    a.ProcessedCount++
-
-    result := &ProcessResult{
-        Success:   true,
-        Message:   fmt.Sprintf("Successfully processed item #%d", a.ProcessedCount),
-        Data: map[string]interface{}{
-            "length":       len(data),
-            "processed_at": time.Now().Format(time.RFC3339),
-            "item_number":  a.ProcessedCount,
-        },
-        Timestamp: time.Now(),
-    }
-
-    return result, nil
-}
-
-// GetStats returns application statistics
-func (a *App) GetStats() map[string]interface{} {
-    return map[string]interface{}{
-        "processed_count": a.ProcessedCount,
-        "verbose":        a.Verbose,
-    }
 }
